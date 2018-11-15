@@ -15,15 +15,12 @@ class Plans extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->increments('id');
-
             $table->string('name');
             $table->text('description')->nullable();
-
             $table->float('price', 8, 2);
             $table->string('currency');
-
             $table->integer('duration')->default(30);
-
+            $table->string('duration_period');
             $table->timestamps();
         });
 
