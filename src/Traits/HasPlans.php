@@ -13,7 +13,7 @@ trait HasPlans
      *
      * @return morphMany Relatinship.
      */
-    public function subscriptions()
+    public function pplsubscriptions()
     {
         return $this->morphMany(config('plans.models.subscription'), 'model');
     }
@@ -25,7 +25,7 @@ trait HasPlans
      */
     public function currentSubscription()
     {
-        return $this->subscriptions()
+        return $this->pplsubscriptions()
                     ->where('starts_on', '<', Carbon::now())
                     ->where('expires_on', '>', Carbon::now());
     }
@@ -37,6 +37,8 @@ trait HasPlans
      */
     public function activeSubscription()
     {
+       /*  echo ' currentSubscription '; 
+        dd($this->currentSubscription()->get()); */
         return $this->currentSubscription()->paid()->notCancelled()->first();
     }
 
@@ -55,7 +57,7 @@ trait HasPlans
             return $this->activeSubscription();
         }
 
-        return $this->subscriptions()->latest('starts_on')->paid()->notCancelled()->first();
+        return $this->pplsubscriptions()->latest('starts_on')->paid()->notCancelled()->first();
     }
 
     /**
@@ -73,7 +75,7 @@ trait HasPlans
             return $this->activeSubscription();
         }
 
-        return $this->subscriptions()->latest('starts_on')->first();
+        return $this->pplsubscriptions()->latest('starts_on')->first();
     }
 
     /**
@@ -83,7 +85,7 @@ trait HasPlans
      */
     public function lastUnpaidSubscription()
     {
-        return $this->subscriptions()->latest('starts_on')->notCancelled()->unpaid()->first();
+        return $this->pplsubscriptions()->latest('starts_on')->notCancelled()->unpaid()->first();
     }
 
     /**
@@ -125,7 +127,7 @@ trait HasPlans
      */
     public function hasSubscriptions()
     {
-        return (bool) ($this->subscriptions()->count() > 0);
+        return (bool) ($this->pplsubscriptions()->count() > 0);
     }
 
     /**
@@ -148,6 +150,49 @@ trait HasPlans
         return (bool) $this->lastDueSubscription();
     }
 
+    //Code added by creative Dev22
+    public function generateInvoice($plan){
+        
+    }    
+
+    //Code added by creative Dev22
+    public function subscribeToPlan($plan, bool $isRecurring = false){
+
+        $subscriptionModel = config('plans.models.subscription');
+         //echo '<pre> subscriptionModel ';  print_r( $subscriptionModel ); echo '</pre>'; exit; 
+        
+       // if ($this->hasDueSubscription()) {
+       //     $this->lastDueSubscription()->delete();
+       // }
+       //echo '<pre> this->subscriptionPaymentMethod  = '; dump($this->subscriptionPaymentMethod); 
+       //echo '<pre> subscribeToPlan this ';  dump($this);
+       $pp_duration_format = pp_duration_format($plan->duration_period); 
+       // dump($plan->duration_period); 
+
+        $pp_exp = Carbon::now(); 
+        $pp_exp = ($pp_duration_format['year']   > 0)?   ($pp_exp->addYears($pp_duration_format['year'])):        $pp_exp; 
+        $pp_exp = ($pp_duration_format['month']  > 0)?   ($pp_exp->addMonths($pp_duration_format['month'])):      $pp_exp; 
+        $pp_exp = ($pp_duration_format['day']    > 0)?   ($pp_exp->addDays($pp_duration_format['day'])):          $pp_exp; 
+        $pp_exp = ($pp_duration_format['hour']   > 0)?   ($pp_exp->addHours($pp_duration_format['hour'])):        $pp_exp; 
+        $pp_exp = ($pp_duration_format['minute'] > 0)?   ($pp_exp->addMinutes($pp_duration_format['minute'])):    $pp_exp; 
+        $pp_exp = ($pp_duration_format['second'] > 0)?   ($pp_exp->addSeconds($pp_duration_format['second'])):    $pp_exp; 
+
+        $subscription = $this->pplsubscriptions()->save(new $subscriptionModel([
+            'plan_id' => $plan->id,
+            'starts_on' => Carbon::now()->subSeconds(1),
+            'expires_on' => $pp_exp,// Carbon::now()->addDays($duration),
+            'cancelled_on' => null, 
+            'payment_method' => 'offline',// ($this->subscriptionPaymentMethod) ?: 'offline',
+            'is_paid' => (bool) false,// ($this->subscriptionPaymentMethod) ? false : true,
+            'charging_price' => $plan->price,
+            'charging_currency' => $plan->currency,
+            'is_recurring' => $isRecurring,
+            //'recurring_each_days' => $duration,
+        ]));
+
+        return $subscription;
+    }
+
     /**
      * Subscribe the binded model to a plan. Returns false if it has an active subscription already.
      *
@@ -158,8 +203,10 @@ trait HasPlans
      */
     public function subscribeTo($plan, int $duration = 30, bool $isRecurring = true)
     {
-        $subscriptionModel = config('plans.models.subscription');
 
+        $subscriptionModel = config('plans.models.subscription');
+         //echo '<pre> subscriptionModel '; print_r( $subscriptionModel ); echo '</pre>'; exit; 
+         
         if ($duration < 1 || $this->hasActiveSubscription()) {
             return false;
         }
@@ -168,7 +215,8 @@ trait HasPlans
             $this->lastDueSubscription()->delete();
         }
 
-        $subscription = $this->subscriptions()->save(new $subscriptionModel([
+
+        $subscription = $this->pplsubscriptions()->save(new $subscriptionModel([
             'plan_id' => $plan->id,
             'starts_on' => Carbon::now()->subSeconds(1),
             'expires_on' => Carbon::now()->addDays($duration),
@@ -180,6 +228,7 @@ trait HasPlans
             'is_recurring' => $isRecurring,
             'recurring_each_days' => $duration,
         ]));
+
 
         if ($this->subscriptionPaymentMethod == 'stripe') {
             try {
@@ -222,7 +271,7 @@ trait HasPlans
             $this->lastDueSubscription()->delete();
         }
 
-        $subscription = $this->subscriptions()->save(new $subscriptionModel([
+        $subscription = $this->pplsubscriptions()->save(new $subscriptionModel([
             'plan_id' => $plan->id,
             'starts_on' => Carbon::now()->subSeconds(1),
             'expires_on' => $date,
