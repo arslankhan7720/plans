@@ -270,4 +270,17 @@ class PlanSubscriptionModel extends Model
 
         return (float) ($feature->isUnlimited()) ? -1 : ($feature->limit - $usage->used);
     }
+
+
+
+
+    public function activateSubscription(){
+        $this->update(array('is_paid' => 1));
+    }
+
+    public function deActivateSubscription(){
+        $this->update(array('is_paid' => 0));
+    }
+    
+
 }
