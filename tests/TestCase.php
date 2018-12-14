@@ -82,5 +82,5 @@ abstract class TestCase extends Orchestra
     protected function getInvalidStripeToken()
     {
         return $this->invalidStripeToken;
-    }
+    } 
 }
