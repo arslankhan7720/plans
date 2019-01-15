@@ -21,6 +21,7 @@ class Plans extends Migration
             $table->string('currency');
             $table->integer('duration')->default(30);
             $table->string('duration_period');
+            $table->string('image');
             $table->timestamps();
         });
 
