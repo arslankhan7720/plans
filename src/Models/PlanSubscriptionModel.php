@@ -53,7 +53,11 @@ class PlanSubscriptionModel extends Model
     {
         return $query->where('expires_on', '<', Carbon::now()->toDateTimeString());
     }
-
+    
+    public function scopeNotExpired($query){
+         return $query->where('expires_on', '>=', Carbon::now()->toDateTimeString());
+    }
+    
     public function scopeRecurring($query)
     {
         return $query->where('is_recurring', true);
