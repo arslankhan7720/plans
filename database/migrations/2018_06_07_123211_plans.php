@@ -58,7 +58,8 @@ class Plans extends Migration
             $table->timestamp('starts_on')->nullable();
             $table->timestamp('expires_on')->nullable();
             $table->timestamp('cancelled_on')->nullable();
-
+            $table->timestamp('last_notification')->nullable();
+            
             $table->timestamps();
         });
 
