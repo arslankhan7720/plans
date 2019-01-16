@@ -570,4 +570,14 @@ trait HasPlans
 
         return $this->subscribeTo($plan, $recurringEachDays);
     }
+    
+   
+    public function activeNotExpiredSub(){
+        return $this->currentSubscription()->paid()->notCancelled()->notExpired()->first();
+    }
+
+     public function hasActiveNotExpiredSub(){
+         return (bool) $this->activeNotExpiredSub();
+    }
+    
 }
